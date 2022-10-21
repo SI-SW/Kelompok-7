@@ -1,0 +1,42 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: GitHub Pages Deploy
+    runs-on: macos-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - name: Init Checkout
+        uses: actions/checkout@v3
+
+      - name: Init NPM
+        uses: npm/action-setup@v2.2.2
+        with:
+          version: latest
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          check-latest: true
+          cache: npm
+      
+      - name: NPM install and Build
+        run:
+          npm i
+          npm build
+        env:
+          VITE_BASE_API_URL: ${{ secrets.VITE_BASE_API_URL }}
+      
+      - name: Deploy Site
+        uses: peaceries/actions-gh-page@v3
+        if: ${{ github.ref == 'refs/heads/main'}}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
